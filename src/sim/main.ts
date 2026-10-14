@@ -8,7 +8,9 @@ import { createCameras } from './cameras.ts';
 import { createCourse } from './course.ts';
 import { createReplay } from './replay.ts';
 import { animateDrone, buildDrone, buildLocation, buildShadow, buildWorld, disposeObject, LOCATIONS, poseDrone, type Location } from './scene.ts';
+import { createTrail } from './trail.ts';
 import { createTraining } from './training.ts';
+import { createTutorial } from './tutorial.ts';
 
 const DT = 1 / SIM.physicsHz;
 const $ = (id: string) => document.getElementById(id)!;
@@ -18,7 +20,7 @@ const $ = (id: string) => document.getElementById(id)!;
 const STARTS = { 'Nose out': 0, 'Nose in': 180, 'Nose left': 270, 'Nose right': 90, Random: -1 };
 const settings = {
   preset: 'agile' as keyof typeof PRESETS, start: 0, windSpeed: 0, windFrom: 0, gusts: 0,
-  location: 'field' as Location, grid: false, sound: true, volume: 0.7, autoZoom: true,
+  location: 'field' as Location, grid: false, sound: true, volume: 0.7, autoZoom: true, trail: true,
 };
 const params: FlightParams = { ...PRESETS.agile.params };
 try {
@@ -49,6 +51,7 @@ gui.add(settings, 'start', STARTS).name('Start orientation').onChange(() => comm
 gui.add(settings, 'location', Object.fromEntries(Object.entries(LOCATIONS).map(([k, v]) => [v, k]))).name('Location').onChange(setLocation);
 gui.add(settings, 'grid').name('5 m distance grid').onChange((v: boolean) => { grid.visible = v; });
 gui.add(settings, 'autoZoom').name('Zoom in on distant drone');
+gui.add(settings, 'trail').name('Flight path trail');
 const windGui = gui.addFolder('Wind');
 windGui.add(settings, 'windSpeed', 0, 12, 0.5).name('Speed (m/s)');
 windGui.add(settings, 'windFrom', 0, 359, 1).name('From (°, 0 = beyond drone)');
@@ -99,6 +102,7 @@ const shadow = buildShadow();
 scene.add(droneMesh, shadow);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 1000);
 const cams = createCameras(camera, renderer.domElement);
+const trail = createTrail(scene);
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
@@ -113,6 +117,8 @@ const send = (msg: object) => { if (ws?.readyState === WebSocket.OPEN) ws.send(J
 const training = createTraining(scene, {
   start: (ex) => {
     replay.close();
+    tutorial.stop();
+    trail.clear();
     drone = spawn(ex.startYaw);
     paused = false;
     $('paused').hidden = true;
@@ -121,14 +127,37 @@ const training = createTraining(scene, {
   send,
   replay: (file) => {
     training.stop();
+    tutorial.stop();
+    trail.clear();
     void replay.open(file);
   },
+  lessons: () => tutorial.lessons(),
+  startLesson: (id) => tutorial.startById(id),
+});
+const tutorial = createTutorial({
+  start: () => {
+    training.stop();
+    replay.close();
+    trail.clear();
+    paused = false;
+    $('paused').hidden = true;
+    return (drone = spawn(0));
+  },
+  buzz: () => send({ type: 'haptic' }),
+  send,
+  menu: () => training.openMenu(),
 });
 const replay = createReplay(createCourse(scene), () => { drone = spawn(); });
 
 // --- commands (phone buttons and Mac keys)
 function command(cmd: string, msg: Record<string, unknown> = {}) {
-  if (cmd === 'reset') { if (training.exercise()) training.restart(); else drone = spawn(); }
+  if (cmd === 'reset') {
+    trail.clear();
+    const lesson = tutorial.lesson();
+    if (training.exercise()) training.restart();
+    else if (lesson) tutorial.start(lesson);
+    else drone = spawn();
+  }
   if (cmd === 'pause') { paused = !paused; $('paused').hidden = !paused; }
   if (cmd === 'camera') cams.next();
   if (cmd === 'start') training.startById(msg.id, msg.mode);
@@ -142,7 +171,7 @@ function command(cmd: string, msg: Record<string, unknown> = {}) {
 }
 addEventListener('keydown', (e) => {
   if ((e.target as HTMLElement).closest('.lil-gui')) return; // typing in the panel
-  if (replay.key(e.key) || training.key(e.key)) { e.preventDefault(); return; }
+  if (replay.key(e.key) || tutorial.key(e.key) || training.key(e.key)) { e.preventDefault(); return; }
   if (e.key >= '1' && e.key <= '5') cams.select(Number(e.key) - 1);
   if (e.key === 'c' || e.key === 'C') cams.next();
   if (e.key === 'r' || e.key === 'R') command('reset');
@@ -196,7 +225,7 @@ function frame(now: number) {
   if (!linked) sticks = NEUTRAL;
   if (paused) acc = 0;
   // An exercise can override the flight mode and wind (e.g. attitude mode in a gusty crosswind).
-  const ex = training.exercise();
+  const ex = training.exercise() ?? tutorial.lesson();
   const p = ex?.params ? { ...params, ...ex.params } : params;
   const w = ex?.wind ?? { speed: settings.windSpeed, from: settings.windFrom, gusts: settings.gusts };
   const steady = windFrom(w.speed, w.from);
@@ -216,13 +245,17 @@ function frame(now: number) {
     const g = gustAt(simTime, w.gusts);
     step(drone, sticks, p, { x: steady.x + g.x, y: steady.y + g.y, z: steady.z + g.z }, DT);
     training.tick(drone, sticks, DT);
+    tutorial.tick(drone, sticks, DT);
   }
+  trail.add(drone.pos);
+  trail.update(settings.trail);
 
   poseDrone(droneMesh, shadow, drone);
   const motors = !paused && (drone.pos.y > 0 || shown.throttle > 0.05);
   animateDrone(droneMesh, motors ? drone.thrust / G : 0, frameDt);
   const zoom = cams.update(droneMesh, settings.autoZoom);
   training.frame(drone, now / 1000);
+  tutorial.frame(drone, shown, now / 1000);
   audio.update({
     on: settings.sound, volume: settings.volume, wind: w.speed + w.gusts / 2, beach: settings.location === 'beach',
     motors, thrust: drone.thrust / G, distance: camera.position.distanceTo(droneMesh.position),

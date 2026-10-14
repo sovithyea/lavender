@@ -37,6 +37,25 @@
     <div class="rc-foot"><div id="rcDots"></div><span><kbd>R</kbd> restart · <kbd>Esc</kbd> quit · <kbd>1</kbd>–<kbd>5</kbd> camera</span></div>
   </div>
 
+  <div id="tutCard" class="glass" hidden aria-live="polite">
+    <div class="rc-head"><span id="tutName"></span><span id="tutCount"></span></div>
+    <div class="tut-body">
+      <div>
+        <div id="tutStep"></div>
+        <div id="tutWhy"></div>
+        <div id="tutHold"><i></i></div>
+      </div>
+      <div class="tut-sticks" aria-label="Which stick to move (Mode 2)">
+        <div class="tut-pad"><i id="tutWantL" class="want"></i><i id="tutYouL" class="you"></i><span>Left</span></div>
+        <div class="tut-pad"><i id="tutWantR" class="want"></i><i id="tutYouR" class="you"></i><span>Right</span></div>
+      </div>
+    </div>
+    <div class="rc-foot"><div id="tutDots"></div>
+      <span class="tut-actions"><span class="tut-legend"><i class="want"></i>push here <i class="you"></i>you (Mode 2)</span>
+        <button id="tutSkip" type="button">Skip step <kbd>N</kbd></button><button id="tutQuit" type="button">Quit <kbd>Esc</kbd></button>
+        <button id="tutNext" class="primary" type="button">Next lesson ▸</button></span></div>
+  </div>
+
   <div id="menu" class="overlay" hidden>
     <div class="panel menu" role="dialog" aria-label="Training exercises">
       <div class="menu-head">
@@ -57,6 +76,9 @@
         </div>
         <span class="mode-help"><b>Guided</b> shows the path, the next targets and live tips. <b>Test</b> shows only the next targets, like the real practical.</span>
       </div>
+      <h3 class="section">Lessons</h3>
+      <div id="lessonList"></div>
+      <h3 class="section">Exercises</h3>
       <div id="menuErrors" class="errors" hidden></div>
       <div id="menuList"></div>
       <div id="recent"></div>

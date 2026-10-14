@@ -188,3 +188,47 @@ button:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; 
 .rp-legend i.ok { background: var(--good); }
 .rp-legend i.bad { background: #f87171; margin-left: 8px; }
 .rp-legend i.line { background: var(--warn); margin-left: 8px; }
+
+/* --- tutorials */
+#tutCard { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(620px, calc(100vw - 32px)); padding: 14px 18px; transition: box-shadow .3s; }
+#tutCard.flash { box-shadow: 0 0 0 3px var(--good), 0 8px 30px rgb(0 0 0 / .25); }
+.tut-body { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; margin-top: 4px; }
+#tutStep { font-size: 18px; font-weight: 650; }
+#tutWhy { color: var(--muted); font-size: 13.5px; margin-top: 4px; min-height: 1.2em; }
+#tutHold { height: 6px; border-radius: 3px; background: rgb(255 255 255 / .1); margin-top: 8px; overflow: hidden; }
+#tutHold i { display: block; height: 100%; background: var(--good); transform: scaleX(0); transform-origin: left; }
+.tut-sticks { display: flex; gap: 10px; }
+.tut-pad { position: relative; width: 84px; height: 84px; border: 1px solid var(--line); border-radius: 10px; background: rgb(255 255 255 / .04); }
+.tut-pad span { position: absolute; bottom: -18px; left: 0; right: 0; text-align: center; font-size: 11px; color: var(--muted); }
+.tut-pad i { position: absolute; left: 50%; top: 50%; border-radius: 50%; }
+.tut-pad i.want { width: 22px; height: 22px; margin: -11px; border: 2px solid var(--warn); animation: nudge 1.2s ease-in-out infinite; }
+.tut-pad i.you { width: 10px; height: 10px; margin: -5px; background: var(--accent-2); }
+@keyframes nudge { 50% { opacity: .35; } }
+.tut-actions { display: flex; gap: 8px; align-items: center; }
+.tut-actions button { border: 1px solid var(--line); background: rgb(255 255 255 / .06); border-radius: 8px; padding: 5px 10px; font-size: 12px; }
+.tut-legend { display: inline-flex; gap: 5px; align-items: center; margin-right: 6px; }
+.tut-legend i { display: inline-block; border-radius: 50%; }
+.tut-legend i.want { width: 10px; height: 10px; border: 2px solid var(--warn); }
+.tut-legend i.you { width: 7px; height: 7px; background: var(--accent-2); margin-left: 6px; }
+#tutNext { display: none; }
+#tutCard.finished #tutNext { display: inline-flex; }
+#tutCard.finished #tutSkip, #tutCard.finished .tut-sticks, #tutCard.finished .tut-legend { display: none; }
+#tutCard.finished #tutStep { color: var(--good); }
+.rc-foot { gap: 10px; flex-wrap: wrap; }
+#tutDots { display: flex; gap: 5px; }
+#tutDots i { width: 8px; height: 8px; border-radius: 50%; background: rgb(255 255 255 / .18); }
+#tutDots i.done { background: var(--good); }
+#tutDots i.now { background: var(--warn); box-shadow: 0 0 0 3px rgb(251 191 36 / .25); }
+
+/* --- menu: lessons */
+h3.section { margin: 4px 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+#lessonList { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.lesson { display: flex; gap: 10px; align-items: center; text-align: left; padding: 12px; border-radius: 12px; background: rgb(255 255 255 / .04); border: 1px solid var(--line); }
+.lesson:hover { border-color: var(--accent); }
+.lesson.next { border-color: var(--accent); background: rgb(138 124 255 / .12); }
+.lesson.done .ex-num { background: var(--good); color: #0b2b16; }
+.lesson b { display: block; font-size: 15px; }
+.lesson small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.lesson .badge { align-self: flex-start; }
+.lesson .ex-num { flex-shrink: 0; }
+.tut-body { margin-bottom: 20px; }

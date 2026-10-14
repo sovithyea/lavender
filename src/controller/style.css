@@ -21,12 +21,12 @@ html, body {
 #left { left: 0; border-right: 1px solid #222; }
 #right { right: 0; }
 .base {
-  position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px;
+  position: absolute; width: 230px; height: 230px; margin: -115px 0 0 -115px;
   border: 2px solid #444; border-radius: 16px; left: 50%; top: 58%; opacity: .5;
 }
 .zone.active .base { opacity: 1; border-color: #8a7cff; }
 .knob {
-  position: absolute; width: 56px; height: 56px; left: 47px; top: 47px;
+  position: absolute; width: 64px; height: 64px; left: 81px; top: 81px; /* centred in the 226 px inside */
   border-radius: 50%; background: #8a7cff; pointer-events: none;
 }
 dialog { background: #1c1c20; color: #eee; border: 1px solid #444; border-radius: 12px; }
@@ -58,3 +58,4 @@ dialog h2 { margin: 0 0 8px; font-size: 16px; }
 #trainList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 45vh; overflow: auto; margin-bottom: 10px; }
 #trainList button { text-align: left; }
 dialog .row { display: flex; gap: 8px; justify-content: flex-end; }
+#coach[hidden] { display: none; }

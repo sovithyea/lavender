@@ -24,7 +24,7 @@ Anyone on your Wi-Fi who opens the link can fly, and every connected phone contr
 - Left stick: up/down = climb/descend, left/right = yaw.
 - Right stick: up/down = forward/back, left/right = roll left/right.
 - Both sticks spring back to centre. Centred sticks brake to a stop and hold position and altitude.
-- Each stick's centre is wherever your thumb lands, so touching never makes the drone jump.
+- The sticks are fixed in place, like a real remote: put your thumb on the centre of each square. Touching off-centre moves the drone straight away.
 - If the phone disconnects or stops sending for more than 300 ms, the sticks go neutral, the drone holds position, and the sim shows **CONTROLLER LOST**.
 
 Phone buttons: **Pause**, **Reset**, 🎥 next camera, 🎯 training, ⚙︎ stick mode (1–4) and start orientation. The phone remembers its settings.
@@ -39,6 +39,20 @@ Mac keys:
 | `P` / `Space` | Pause (in a replay, `Space` plays and pauses) |
 | `Esc` | Quit the exercise, close the replay or close the menu |
 | `Enter` | Try again, from the results |
+
+## Lessons
+
+New to the sticks? Start with the **Lessons** at the top of the training menu (`T`, or 🎯 on the phone). Each step tells you what to do and waits until you've done it. A diagram shows which stick to push (amber ring) next to where your sticks are (dot), in Mode 2.
+
+1. **First flight:** climb, let go, yaw, forward and back, sideways, land.
+2. **Orientation:** fly with the nose facing you and to the side, when the sticks feel reversed.
+3. **Attitude mode:** no GPS hold and a crosswind; feel the drift and learn to catch it.
+
+`N` skips a step, `Esc` quits, and `R` (or the phone's Reset) restarts the lesson. Finished lessons get a tick, saved in that browser.
+
+## Flight path trail
+
+A line follows the drone, bright where it is now and fading where it was, so you can see the shape you flew. It's clearest from the top-down camera (`3`). It clears when you reset or start an exercise, and you can turn it off in Settings.
 
 ## Training
 

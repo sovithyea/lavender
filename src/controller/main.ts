@@ -1,6 +1,6 @@
 import { mapSticks, type RawSticks, type StickMode } from '../shared/sticks.ts';
 
-const TRAVEL = 60; // px from centre to full deflection
+const TRAVEL = 82; // px from centre to full deflection: the knob reaches the edge of the square
 const SEND_MS = 16;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -16,42 +16,41 @@ function haptic() {
   else hapticLabel.click();
 }
 
-// Floating sticks: the stick centre is wherever your thumb lands, so touching never causes a jump.
+// Fixed sticks, like a real remote: each stick's centre stays put, and the stick deflects by how far
+// your thumb is from it, so touching off-centre moves the drone straight away.
 // Each axis is clamped on its own, like a real square gimbal (full throttle + full yaw is possible).
 function stick(zone: HTMLElement, xKey: 'lx' | 'rx', yKey: 'ly' | 'ry') {
   const base = zone.querySelector<HTMLElement>('.base')!;
   const knob = zone.querySelector<HTMLElement>('.knob')!;
-  let pointer: number | null = null, ox = 0, oy = 0, atLimit = false;
+  let pointer: number | null = null, atLimit = false;
 
   const draw = () => { knob.style.transform = `translate(${raw[xKey] * TRAVEL}px, ${-raw[yKey] * TRAVEL}px)`; };
+  const move = (e: PointerEvent) => {
+    const r = base.getBoundingClientRect();
+    const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+    raw[xKey] = clamp((e.clientX - (r.left + r.width / 2)) / TRAVEL);
+    raw[yKey] = clamp((r.top + r.height / 2 - e.clientY) / TRAVEL);
+    const limit = Math.abs(raw[xKey]) === 1 || Math.abs(raw[yKey]) === 1;
+    if (limit && !atLimit) haptic();
+    atLimit = limit;
+    draw();
+  };
   const release = (e: PointerEvent) => {
     if (e.pointerId !== pointer) return;
     pointer = null;
     raw[xKey] = raw[yKey] = 0;
+    atLimit = false;
     zone.classList.remove('active');
-    base.style.left = base.style.top = '';
     draw();
   };
   zone.addEventListener('pointerdown', (e) => {
     if (pointer !== null) return;
     pointer = e.pointerId;
-    zone.setPointerCapture(e.pointerId);
-    const r = zone.getBoundingClientRect();
-    ox = e.clientX; oy = e.clientY;
-    base.style.left = `${ox - r.left}px`;
-    base.style.top = `${oy - r.top}px`;
     zone.classList.add('active');
+    move(e);
+    zone.setPointerCapture(e.pointerId);
   });
-  zone.addEventListener('pointermove', (e) => {
-    if (e.pointerId !== pointer) return;
-    const clamp = (v: number) => Math.max(-1, Math.min(1, v));
-    raw[xKey] = clamp((e.clientX - ox) / TRAVEL);
-    raw[yKey] = clamp((oy - e.clientY) / TRAVEL);
-    const limit = Math.abs(raw[xKey]) === 1 || Math.abs(raw[yKey]) === 1;
-    if (limit && !atLimit) haptic();
-    atLimit = limit;
-    draw();
-  });
+  zone.addEventListener('pointermove', (e) => { if (e.pointerId === pointer) move(e); });
   zone.addEventListener('pointerup', release);
   zone.addEventListener('pointercancel', release);
 }

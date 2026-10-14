@@ -20,6 +20,8 @@ export interface TrainingHooks {
   buzz(): void;                              // haptic tick on the phone
   send(msg: object): void;                   // message to the phone
   replay(file: string): void;                // open a saved attempt in the replay viewer
+  lessons(): { id: string; name: string; brief: string; done: boolean }[];
+  startLesson(id: string): void;
 }
 
 export function createTraining(scene: THREE.Scene, hooks: TrainingHooks) {
@@ -39,7 +41,8 @@ export function createTraining(scene: THREE.Scene, hooks: TrainingHooks) {
     } catch (e) {
       errors = [`Could not reach the server: ${(e as Error).message}`];
     }
-    hooks.send({ type: 'maneuvers', list: exercises.map((e) => ({ id: e.id, name: e.name })), mode });
+    const lessons = hooks.lessons().map((l, i) => ({ id: `lesson:${l.id}`, name: `Lesson ${i + 1}: ${l.name}` }));
+    hooks.send({ type: 'maneuvers', list: [...lessons, ...exercises.map((e) => ({ id: e.id, name: e.name }))], mode });
     if (!$('menu').hidden) renderMenu();
   }
 
@@ -92,7 +95,11 @@ export function createTraining(scene: THREE.Scene, hooks: TrainingHooks) {
 
   function renderMenu() {
     const earned = exercises.reduce((n, e) => n + starsFor(bestOf(e.id)), 0);
-    const next = exercises.find((e) => bestOf(e.id) < 75) ?? exercises[0];
+    const lessons = hooks.lessons(), firstLesson = lessons.find((l) => !l.done);
+    const next = firstLesson ? null : exercises.find((e) => bestOf(e.id) < 75) ?? exercises[0];
+    $('lessonList').innerHTML = lessons.map((l, i) => `<button class="lesson${l === firstLesson ? ' next' : ''}${l.done ? ' done' : ''}" data-lesson="${esc(l.id)}" type="button">
+      <span class="ex-num">${l.done ? '✓' : i + 1}</span><span><b>${esc(l.name)}</b><small>${esc(l.brief)}</small></span>
+      ${l === firstLesson ? '<span class="badge">Start here</span>' : ''}</button>`).join('');
     $('menuStars').textContent = `${earned} / ${exercises.length * 3}`;
     $('menuBar').style.width = `${exercises.length ? (100 * earned) / (exercises.length * 3) : 0}%`;
     for (const b of document.querySelectorAll<HTMLElement>('#modeSwitch [data-mode]')) b.classList.toggle('on', b.dataset.mode === mode);
@@ -148,6 +155,10 @@ export function createTraining(scene: THREE.Scene, hooks: TrainingHooks) {
     const ex = exercises.find((x) => x.id === id);
     if (ex) start(ex);
   });
+  $('lessonList').addEventListener('click', (e) => {
+    const id = (e.target as HTMLElement).closest<HTMLElement>('[data-lesson]')?.dataset.lesson;
+    if (id) { hide('menu'); hooks.startLesson(id); }
+  });
   $('recent').addEventListener('click', (e) => {
     const file = (e.target as HTMLElement).closest<HTMLElement>('[data-replay]')?.dataset.replay;
     if (file) { hide('menu'); hooks.replay(file); }
@@ -190,6 +201,7 @@ export function createTraining(scene: THREE.Scene, hooks: TrainingHooks) {
     restart: () => { if (run) start(run.ex, run.mode); },
     // From the phone: start an exercise by id, in a given mode.
     startById(id: unknown, m: unknown) {
+      if (typeof id === 'string' && id.startsWith('lesson:')) { hide('menu'); hide('results'); hooks.startLesson(id.slice(7)); return; }
       const ex = exercises.find((e) => e.id === id);
       if (!ex) return;
       if (m === 'guided' || m === 'test') setMode(m);
