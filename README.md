@@ -113,3 +113,7 @@ Your settings are saved in that browser and survive a reload. The presets are pl
 npm test            # physics, sticks, maneuvers.json, scoring, and a virtual pilot flying every exercise
 npm run typecheck
 ```
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).

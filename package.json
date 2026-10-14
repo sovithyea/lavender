@@ -15,6 +15,7 @@
   },
   "homepage": "https://github.com/sovithyea/lavendar#readme",
   "private": true,
+  "license": "MIT",
   "dependencies": {
     "express": "^5.3.0",
     "lil-gui": "^0.21.0",
