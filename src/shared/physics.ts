@@ -36,6 +36,12 @@ const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 export function forwardOf(yaw: number) { return { x: Math.sin(yaw), z: -Math.cos(yaw) }; }
 export function rightOf(yaw: number) { return { x: Math.cos(yaw), z: Math.sin(yaw) }; }
 
+// Wind is given the way pilots say it: speed, and the bearing it blows FROM (0 = from beyond the drone, toward the pilot).
+export function windFrom(speed: number, fromDeg: number): Vec3 {
+  const f = forwardOf(fromDeg * DEG);
+  return { x: -f.x * speed, y: 0, z: -f.z * speed };
+}
+
 export function expo(v: number, e: number): number {
   const a = Math.abs(v);
   if (a < DEADBAND) return 0;

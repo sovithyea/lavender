@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS, type FlightParams } from '../src/shared/config.ts';
-import { createState, DEG, step, type DroneState } from '../src/shared/physics.ts';
+import { createState, DEG, step, windFrom, type DroneState } from '../src/shared/physics.ts';
 import { NEUTRAL, type Sticks } from '../src/shared/sticks.ts';
 
 const DT = 1 / 120;
@@ -83,5 +83,15 @@ describe('physics step', () => {
     const stab = fly(createState({ x: 0, y: 10, z: 0 }, 0), NEUTRAL, agile(), 20, wind);
     expect(atti.pos.x).toBeGreaterThan(10);
     expect(Math.abs(stab.pos.x)).toBeLessThan(1);
+  });
+
+  it('wind blows from the bearing it is named for', () => {
+    const towardPilot = windFrom(5, 0), towardLeft = windFrom(5, 90);
+    expect(towardPilot.z).toBeCloseTo(5);
+    expect(towardPilot.x).toBeCloseTo(0);
+    expect(towardLeft.x).toBeCloseTo(-5);
+    // An attitude-mode drone in wind from 90° (pilot's right) drifts left.
+    const s = fly(createState({ x: 0, y: 10, z: 0 }, 0), NEUTRAL, { ...agile(), mode: 'attitude' }, 5, towardLeft);
+    expect(s.pos.x).toBeLessThan(-3);
   });
 });
