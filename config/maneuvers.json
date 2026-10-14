@@ -1,0 +1,90 @@
+[
+  {
+    "id": "hover", "name": "Take-off and hover", "skill": "Throttle control", "par": 30,
+    "brief": "Lift off, climb into the ring and hold it steady. Then land gently back on the pad.",
+    "steps": [
+      { "hold": [0, 3, 10], "seconds": 8, "text": "Climb into the ring and hold steady" },
+      { "land": [0, 0, 10], "text": "Land back on the pad" }
+    ]
+  },
+  {
+    "id": "nose-in", "name": "Nose-in hover", "skill": "Orientation", "par": 40,
+    "brief": "Turn the drone to face you and hold. Left and right are now reversed on the right stick.",
+    "steps": [
+      { "hold": [0, 3, 10], "seconds": 2, "radius": 1.5, "height": 1, "text": "Take off and climb to 3 m" },
+      { "hold": [0, 3, 12], "seconds": 10, "yaw": 180, "text": "Yaw until the nose faces you, then hold" },
+      { "land": [0, 0, 10], "text": "Land back on the pad" }
+    ]
+  },
+  {
+    "id": "side-on", "name": "Side-on hovers", "skill": "Orientation", "par": 50,
+    "brief": "Hold with the nose pointing to your right, then to your left. Forward stick now moves the drone sideways.",
+    "steps": [
+      { "hold": [0, 3, 10], "seconds": 2, "radius": 1.5, "height": 1, "text": "Take off and climb to 3 m" },
+      { "hold": [0, 3, 12], "seconds": 8, "yaw": 90, "text": "Point the nose to your right and hold" },
+      { "hold": [0, 3, 12], "seconds": 8, "yaw": 270, "text": "Now point the nose to your left and hold" },
+      { "land": [0, 0, 10], "text": "Land back on the pad" }
+    ]
+  },
+  {
+    "id": "box", "name": "Box pattern", "skill": "Coordination", "par": 60,
+    "brief": "Fly a 20 m square through the four corner hoops at a steady 3 m. Keep your line straight and your height level on every leg.",
+    "tolerance": { "lateral": 1.5, "vertical": 1 },
+    "steps": [
+      { "hold": [0, 3, 10], "seconds": 3, "text": "Take off and climb to 3 m" },
+      { "gate": [-10, 3, 10], "text": "Fly left to the first corner" },
+      { "gate": [-10, 3, 30], "text": "Fly away to the far-left corner" },
+      { "gate": [10, 3, 30], "text": "Fly across to the far-right corner" },
+      { "gate": [10, 3, 10], "text": "Fly back toward you to the last corner" },
+      { "hold": [0, 3, 10], "seconds": 3, "radius": 1, "height": 0.75, "text": "Return to the start and hold" },
+      { "land": [0, 0, 10], "radius": 1, "text": "Land back on the pad" }
+    ]
+  },
+  {
+    "id": "precision", "name": "Precision landing", "skill": "Judging distance", "par": 35,
+    "brief": "Fly out to the far pad and land right on the centre. Distance is hard to judge from where you stand.",
+    "tolerance": { "lateral": 2, "vertical": 1.5 },
+    "steps": [
+      { "hold": [0, 4, 10], "seconds": 2, "radius": 1.5, "height": 1, "text": "Take off and climb to 4 m" },
+      { "gate": [8, 4, 28], "text": "Fly over to the far pad" },
+      { "land": [8, 0, 28], "radius": 0.6, "text": "Land on the centre of the pad" }
+    ]
+  },
+  {
+    "id": "figure8", "name": "Figure eight", "skill": "Smooth turns", "par": 90,
+    "brief": "Fly a figure eight around the two poles at 4 m, through each hoop in order.",
+    "tolerance": { "lateral": 2, "vertical": 1 },
+    "poles": [[-7, 25], [7, 25]],
+    "steps": [
+      { "hold": [0, 4, 10], "seconds": 2, "radius": 1.5, "text": "Take off and climb to 4 m" },
+      { "gate": [0, 4, 25], "text": "Fly to the crossing point" },
+      { "arc": { "center": [-7, 25], "radius": 7, "from": 90, "sweep": -360, "y": 4, "gates": 4 }, "text": "Loop round the left pole" },
+      { "arc": { "center": [7, 25], "radius": 7, "from": 270, "sweep": 360, "y": 4, "gates": 4 }, "text": "Loop round the right pole" },
+      { "land": [0, 0, 10], "radius": 1, "text": "Land back on the pad" }
+    ]
+  },
+  {
+    "id": "orbit", "name": "Orbit", "skill": "Smooth turns", "par": 70,
+    "brief": "Circle the pole at 10 m radius and 5 m height, like filming a point of interest.",
+    "tolerance": { "lateral": 2, "vertical": 1 },
+    "poles": [[0, 30]],
+    "steps": [
+      { "hold": [0, 5, 10], "seconds": 2, "radius": 1.5, "text": "Take off and climb to 5 m" },
+      { "gate": [0, 5, 20], "text": "Fly to the near side of the circle" },
+      { "arc": { "center": [0, 30], "radius": 10, "from": 180, "sweep": 360, "y": 5, "gates": 8 }, "text": "Orbit the pole" },
+      { "land": [0, 0, 10], "radius": 1, "text": "Land back on the pad" }
+    ]
+  },
+  {
+    "id": "atti-wind", "name": "Attitude mode in wind", "skill": "No-GPS control", "par": 50,
+    "brief": "No GPS hold and a gusty 4 m/s crosswind: the drone drifts unless you correct. Use small, early stick inputs.",
+    "flightMode": "attitude",
+    "wind": { "speed": 4, "from": 90, "gusts": 1 },
+    "tolerance": { "lateral": 1.5, "vertical": 1 },
+    "steps": [
+      { "hold": [0, 3, 10], "seconds": 2, "text": "Take off and climb to 3 m" },
+      { "hold": [0, 3, 12], "seconds": 15, "text": "Hold in the ring against the wind" },
+      { "land": [0, 0, 10], "text": "Land back on the pad" }
+    ]
+  }
+]

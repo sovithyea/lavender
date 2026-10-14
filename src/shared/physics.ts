@@ -36,6 +36,17 @@ const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 export function forwardOf(yaw: number) { return { x: Math.sin(yaw), z: -Math.cos(yaw) }; }
 export function rightOf(yaw: number) { return { x: Math.cos(yaw), z: Math.sin(yaw) }; }
 
+// Gusts: a few sine waves at unrelated periods added together, so the pattern never visibly repeats.
+// strength is roughly the peak extra wind speed in m/s; the vertical part is small.
+export function gustAt(t: number, strength: number): Vec3 {
+  const w = (rate: number, phase: number) => Math.sin(t * rate + phase);
+  return {
+    x: strength * (0.5 * w(0.71, 1.3) + 0.3 * w(1.93, 4.1) + 0.2 * w(0.23, 2.2)),
+    y: strength * 0.15 * w(1.31, 0.4),
+    z: strength * (0.5 * w(0.53, 3.7) + 0.3 * w(1.67, 5.3) + 0.2 * w(0.31, 0.9)),
+  };
+}
+
 // Wind is given the way pilots say it: speed, and the bearing it blows FROM (0 = from beyond the drone, toward the pilot).
 export function windFrom(speed: number, fromDeg: number): Vec3 {
   const f = forwardOf(fromDeg * DEG);

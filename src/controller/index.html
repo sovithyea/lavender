@@ -18,8 +18,11 @@
     <span id="modeLabel"></span>
     <button id="pause" type="button">Pause</button>
     <button id="reset" type="button">Reset</button>
+    <button id="camBtn" type="button" aria-label="Switch camera">🎥</button>
+    <button id="trainBtn" type="button" aria-label="Training">🎯</button>
     <button id="settingsBtn" type="button" aria-label="Settings">⚙︎</button>
   </div>
+  <div id="coach" hidden><b id="coachStep"></b><span id="coachTip"></span></div>
   <div class="zone" id="left" aria-label="Left stick"><div class="base"><div class="knob"></div></div></div>
   <div class="zone" id="right" aria-label="Right stick"><div class="base"><div class="knob"></div></div></div>
 
@@ -28,7 +31,21 @@
       <h2>Stick mode</h2>
       <div id="modes"></div>
       <p class="hint">Mode 2: left = throttle/yaw, right = pitch/roll.</p>
+      <h2>Start orientation</h2>
+      <div id="orients"></div>
       <button type="submit">Done</button>
+    </form>
+  </dialog>
+
+  <dialog id="train">
+    <form method="dialog">
+      <h2>Training</h2>
+      <div id="trainMode">
+        <label><input type="radio" name="tmode" value="guided" checked /> Guided</label>
+        <label><input type="radio" name="tmode" value="test" /> Test (no tips)</label>
+      </div>
+      <div id="trainList"><p class="hint">Open the sim on the Mac to load the exercises.</p></div>
+      <div class="row"><button id="trainStop" type="button">Stop exercise</button><button type="submit">Close</button></div>
     </form>
   </dialog>
 

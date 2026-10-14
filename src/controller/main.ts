@@ -78,6 +78,59 @@ const showMode = () => { $('modeLabel').textContent = `Mode ${mode}`; };
 showMode();
 $('settingsBtn').addEventListener('click', () => { haptic(); $<HTMLDialogElement>('settings').showModal(); });
 
+// Settings: start orientation (the sim owns it; the phone remembers your last pick).
+const ORIENTS: [string, number][] = [['Nose out', 0], ['Nose in', 180], ['Nose left', 270], ['Nose right', 90], ['Random', -1]];
+let orient = 0;
+try { orient = Number(localStorage.getItem('startOrientation') ?? 0); } catch { /* default */ }
+for (const [label, deg] of ORIENTS) {
+  $('orients').insertAdjacentHTML('beforeend',
+    `<label><input type="radio" name="orient" value="${deg}" ${deg === orient ? 'checked' : ''}/> ${label}</label>`);
+}
+$('orients').addEventListener('change', (e) => {
+  orient = Number((e.target as HTMLInputElement).value);
+  try { localStorage.setItem('startOrientation', String(orient)); } catch { /* not persisted */ }
+  send({ type: 'cmd', cmd: 'start-orientation', deg: orient });
+});
+
+// Training: pick an exercise on the phone; the sim sends the list and a live status line.
+const trainMode = () => (document.querySelector<HTMLInputElement>('input[name="tmode"]:checked')?.value ?? 'guided');
+function showList(list: unknown) {
+  if (!Array.isArray(list)) return;
+  const box = $('trainList');
+  box.replaceChildren(...list.filter((x) => typeof x?.id === 'string' && typeof x?.name === 'string').map((x: { id: string; name: string }) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = x.name;
+    b.addEventListener('click', () => {
+      haptic();
+      send({ type: 'cmd', cmd: 'start', id: x.id, mode: trainMode() });
+      $<HTMLDialogElement>('train').close();
+    });
+    return b;
+  }));
+}
+$('trainBtn').addEventListener('click', () => { haptic(); $<HTMLDialogElement>('train').showModal(); });
+$('trainStop').addEventListener('click', () => { haptic(); send({ type: 'cmd', cmd: 'stop' }); $<HTMLDialogElement>('train').close(); });
+$('camBtn').addEventListener('click', () => { haptic(); send({ type: 'cmd', cmd: 'camera' }); });
+
+let resultUntil = 0;
+function showStatus(msg: Record<string, unknown>) {
+  const coach = $('coach'), tip = $('coachTip');
+  if (msg.type === 'result') {
+    resultUntil = performance.now() + 6000;
+    $('coachStep').textContent = `${String(msg.name)}: ${Number(msg.score)}  ${'★'.repeat(Number(msg.stars) || 0)}`;
+    tip.textContent = 'Results are on the Mac';
+    coach.hidden = false;
+    return;
+  }
+  if (performance.now() < resultUntil) return;
+  coach.hidden = !msg.running;
+  if (!msg.running) return;
+  $('coachStep').textContent = `${Number(msg.step)}/${Number(msg.total)} · ${String(msg.text)}`;
+  tip.textContent = typeof msg.tip === 'string' ? msg.tip : '';
+  tip.classList.toggle('good', msg.inside === true);
+}
+
 // Connection: send sticks at ~60 Hz; reconnect forever.
 const status = $('status');
 let ws: WebSocket | null = null;
@@ -95,6 +148,11 @@ function connect() {
     const msg = JSON.parse(e.data);
     if (msg.type === 'peer' && msg.role === 'sim') { simConnected = msg.connected; setStatus(); }
     if (msg.type === 'haptic') haptic();
+    if (msg.type === 'maneuvers') showList(msg.list);
+    if ((msg.type === 'maneuvers' || msg.type === 'mode') && (msg.mode === 'guided' || msg.mode === 'test')) {
+      document.querySelector<HTMLInputElement>(`input[name="tmode"][value="${msg.mode}"]`)!.checked = true;
+    }
+    if (msg.type === 'status' || msg.type === 'result') showStatus(msg);
   };
 }
 connect();

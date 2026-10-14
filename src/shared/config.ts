@@ -42,4 +42,16 @@ export const SIM = {
   failsafeMs: 300,       // no stick packet for this long = sticks neutral + "controller lost"
   pilotEyeHeight: 1.7,   // m
   spawnDistance: 10,     // m in front of the pilot
+  boundary: 60,          // m from the pilot: flying further out is a breach during an exercise
+  heightLimit: 30,       // m: flying higher is a breach during an exercise
+  recordHz: 30,          // replay samples per second
+};
+
+// How an exercise score is made up (weights add to 1), and what a breach costs.
+export const SCORING = {
+  accuracy: 0.7,
+  speed: 0.15,
+  smoothness: 0.15,
+  breachPenalty: 10,     // points off per boundary or height breach
+  stickRateRef: 6,       // RMS stick movement (full-scale per second) that scores 0 for smoothness
 };

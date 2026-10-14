@@ -295,34 +295,120 @@ function goal(z: number) {
 
 // --- drone
 
-// About 0.5 m across. Front arms red, rear arms dark, like the LED colours you read on a real drone.
+// A Phantom-class camera quad, 0.4 m motor to motor. Front is local -z.
+// Orientation cues pilots read at distance: red LEDs and red arm bands at the front, green LEDs at the back.
+const MOTOR = 0.14; // m, motor offset along x and z
+const PROP_R = 0.12;
+
+// Soft round glow for the LED sprites, made once.
+let glow: THREE.Texture | null = null;
+function glowTexture() {
+  if (glow) return glow;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  const g = cv.getContext('2d')!, grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgb(255 255 255 / 1)');
+  grad.addColorStop(0.25, 'rgb(255 255 255 / .6)');
+  grad.addColorStop(1, 'rgb(255 255 255 / 0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  return (glow = new THREE.CanvasTexture(cv));
+}
+
+// A cylinder between two points (arms, legs, skids).
+function rod(a: THREE.Vector3, b: THREE.Vector3, radius: number, mat: THREE.Material) {
+  const len = a.distanceTo(b);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, len, 8), mat);
+  m.position.copy(a).add(b).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+  return m;
+}
+
 export function buildDrone() {
   const drone = new THREE.Group();
   drone.rotation.order = 'YXZ';
-  const mat = (color: number) => new THREE.MeshLambertMaterial({ color });
-  drone.add(new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.26), mat(0xf4f4f4)));
-  const cam = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.07), mat(0x111111));
-  cam.position.set(0, -0.06, -0.14);
-  drone.add(cam);
+  const std = (color: number, roughness: number, metalness: number) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  const shell = std(0xf2f2f0, 0.45, 0.1), panel = std(0x2b2f36, 0.35, 0.3), metal = std(0x1c1c1e, 0.35, 0.6);
+  const accent = std(0xd8322a, 0.45, 0.1), glass = std(0x223355, 0.1, 0.8);
+  const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+
+  // Body: a flattened egg with a dark canopy on top and a slimmer tail.
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14), shell);
+  body.scale.set(0.07, 0.04, 0.125);
+  body.position.y = 0.02;
+  const canopy = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), panel);
+  canopy.scale.set(0.05, 0.026, 0.09);
+  canopy.position.set(0, 0.036, 0.005);
+  drone.add(body, canopy);
+
+  // Gimbal camera under the nose.
+  const cam = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.03, 0.03), metal);
+  cam.position.set(0, -0.025, -0.1);
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.008, 12).rotateX(Math.PI / 2), glass);
+  lens.position.set(0, -0.025, -0.118);
+  drone.add(cam, lens, rod(v(0, 0.0, -0.09), v(0, -0.012, -0.1), 0.004, metal));
+
+  // Landing gear: two skids on slanted legs; their underside sits at -0.06 so poseDrone's +0.06 lands it on y = 0.
+  for (const sx of [-1, 1]) {
+    drone.add(rod(v(sx * 0.075, -0.054, -0.08), v(sx * 0.075, -0.054, 0.08), 0.006, shell));
+    for (const sz of [-1, 1]) drone.add(rod(v(sx * 0.04, 0, sz * 0.05), v(sx * 0.075, -0.054, sz * 0.055), 0.005, shell));
+  }
+
+  // Arms, motors, props and LEDs, sharing geometry and materials across all four.
+  const bladeShape = new THREE.Shape([v(0, -0.009, 0), v(PROP_R * 0.45, -0.011, 0), v(PROP_R, -0.004, 0), v(PROP_R, 0.004, 0), v(PROP_R * 0.45, 0.009, 0), v(0, 0.008, 0)].map((p) => new THREE.Vector2(p.x, p.y)));
+  const bladeGeo = new THREE.ShapeGeometry(bladeShape).rotateX(-Math.PI / 2);
+  const bladeMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.6, side: THREE.DoubleSide, transparent: true });
+  const discGeo = new THREE.CircleGeometry(PROP_R, 32).rotateX(-Math.PI / 2);
+  const discMat = new THREE.MeshBasicMaterial({ color: 0x8a8a8a, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+  const motorGeo = new THREE.CylinderGeometry(0.022, 0.024, 0.03, 16), hubGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.012, 10);
+  const ledGeo = new THREE.SphereGeometry(0.01, 10, 8);
+  const props: { group: THREE.Group; dir: number }[] = [];
 
   for (const [sx, sz] of [[1, -1], [-1, -1], [1, 1], [-1, 1]]) {
-    const front = sz < 0;
-    const tip = new THREE.Vector3(sx * 0.2, 0, sz * 0.2);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.28), mat(front ? 0xd32f2f : 0x333333));
-    arm.position.copy(tip).multiplyScalar(0.5);
-    arm.lookAt(tip);
-    drone.add(arm);
-    const rotor = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.12, 0.005, 24),
-      new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.25 }),
-    );
-    rotor.position.set(tip.x, 0.05, tip.z);
-    drone.add(rotor);
-    const led = new THREE.Mesh(new THREE.SphereGeometry(0.025), new THREE.MeshBasicMaterial({ color: front ? 0xff2020 : 0x20ff40 }));
-    led.position.set(tip.x, -0.03, tip.z);
-    drone.add(led);
+    const front = sz < 0, tip = v(sx * MOTOR, 0.02, sz * MOTOR);
+    drone.add(rod(v(sx * 0.03, 0.02, sz * 0.05), tip, 0.01, shell));
+    if (front) drone.add(rod(tip.clone().lerp(v(0, 0.02, 0), 0.35), tip.clone().lerp(v(0, 0.02, 0), 0.2), 0.0115, accent));
+    const motor = new THREE.Mesh(motorGeo, metal);
+    motor.position.set(tip.x, 0.035, tip.z);
+    drone.add(motor);
+
+    // Two pitched blades on a hub; front-left and rear-right turn one way, the other pair the other way.
+    const prop = new THREE.Group();
+    prop.position.set(tip.x, 0.058, tip.z);
+    prop.add(new THREE.Mesh(hubGeo, metal));
+    for (const a of [0, Math.PI]) {
+      const blade = new THREE.Mesh(bladeGeo, bladeMat);
+      blade.rotation.set(0, a, (a ? -1 : 1) * 0.12);
+      prop.add(blade);
+    }
+    const disc = new THREE.Mesh(discGeo, discMat);
+    disc.position.set(tip.x, 0.058, tip.z);
+    drone.add(prop, disc);
+    props.push({ group: prop, dir: sx * sz > 0 ? 1 : -1 });
+
+    // LEDs under the motors. The glow is a fixed size on screen, so it stays subtle up close and still reads at 50 m.
+    const color = front ? 0xff2020 : 0x20ff40;
+    const led = new THREE.Mesh(ledGeo, new THREE.MeshBasicMaterial({ color }));
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color, depthWrite: false, sizeAttenuation: false }));
+    halo.scale.set(0.0045, 0.0045, 1);
+    led.position.set(tip.x, 0.014, tip.z);
+    halo.position.copy(led.position);
+    drone.add(led, halo);
   }
+  drone.userData = { props, bladeMat, discMat };
   return drone;
+}
+
+// spin: 0 = motors stopped, about 1 at hover, up to ~1.4 at full thrust.
+// Real props blur into a disc at speed, so the blades fade out as a faint disc fades in.
+export function animateDrone(drone: THREE.Object3D, spin: number, dt: number) {
+  const { props, bladeMat, discMat } = drone.userData as {
+    props: { group: THREE.Group; dir: number }[]; bladeMat: THREE.MeshStandardMaterial; discMat: THREE.MeshBasicMaterial;
+  };
+  for (const p of props) p.group.rotation.y += p.dir * spin * 60 * dt;
+  const blur = Math.min(1, Math.max(0, (spin - 0.4) / 0.4));
+  bladeMat.opacity = 1 - 0.85 * blur;
+  discMat.opacity = 0.28 * blur;
 }
 
 // A soft blob under the drone: the main depth cue when judging height and distance by eye.

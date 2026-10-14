@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS, type FlightParams } from '../src/shared/config.ts';
-import { createState, DEG, step, windFrom, type DroneState } from '../src/shared/physics.ts';
+import { createState, DEG, gustAt, step, windFrom, type DroneState } from '../src/shared/physics.ts';
 import { NEUTRAL, type Sticks } from '../src/shared/sticks.ts';
 
 const DT = 1 / 120;
@@ -83,6 +83,22 @@ describe('physics step', () => {
     const stab = fly(createState({ x: 0, y: 10, z: 0 }, 0), NEUTRAL, agile(), 20, wind);
     expect(atti.pos.x).toBeGreaterThan(10);
     expect(Math.abs(stab.pos.x)).toBeLessThan(1);
+  });
+
+  it('gusts vary over time, stay within their strength and average out', () => {
+    let maxH = 0, sumX = 0, sumZ = 0;
+    const n = 6000;
+    for (let i = 0; i < n; i++) {
+      const g = gustAt(i * 0.1, 3);
+      maxH = Math.max(maxH, Math.hypot(g.x, g.z));
+      sumX += g.x; sumZ += g.z;
+    }
+    expect(maxH).toBeGreaterThan(1.5);
+    expect(maxH).toBeLessThanOrEqual(3 * Math.SQRT2);
+    expect(Math.abs(sumX / n)).toBeLessThan(0.2);
+    expect(Math.abs(sumZ / n)).toBeLessThan(0.2);
+    const calm = gustAt(5, 0);
+    expect(Math.hypot(calm.x, calm.y, calm.z)).toBe(0);
   });
 
   it('wind blows from the bearing it is named for', () => {

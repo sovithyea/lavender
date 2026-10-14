@@ -43,3 +43,18 @@ dialog h2 { margin: 0 0 8px; font-size: 16px; }
 }
 #haptic { position: absolute; left: -9999px; opacity: 0; pointer-events: none; }
 #settingsBtn { font-size: 20px; padding: 4px 12px; }
+#camBtn, #trainBtn { font-size: 18px; padding: 4px 12px; }
+#coach {
+  position: fixed; top: calc(max(6px, env(safe-area-inset-top)) + 50px); left: 50%; transform: translateX(-50%); z-index: 2;
+  max-width: 60vw; text-align: center; padding: 6px 12px; border-radius: 10px; background: rgb(28 28 32 / .85);
+  pointer-events: none; display: flex; flex-direction: column; gap: 2px;
+}
+#coach b { font-size: 14px; }
+#coachTip { color: #fbbf24; font-size: 13px; min-height: 1em; }
+#coachTip.good { color: #4ade80; }
+#train { max-height: 90vh; }
+#trainMode, #orients { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+#trainMode label, #orients label { display: flex; gap: 4px; align-items: center; font-size: 15px; }
+#trainList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 45vh; overflow: auto; margin-bottom: 10px; }
+#trainList button { text-align: left; }
+dialog .row { display: flex; gap: 8px; justify-content: flex-end; }
