@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Lavender RC" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="data:," />
+  <title>Lavender RC</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="bar">
+    <span id="status" aria-live="polite">Connecting…</span>
+    <span id="modeLabel"></span>
+    <button id="pause" type="button">Pause</button>
+    <button id="reset" type="button">Reset</button>
+    <button id="settingsBtn" type="button" aria-label="Settings">⚙︎</button>
+  </div>
+  <div class="zone" id="left" aria-label="Left stick"><div class="base"><div class="knob"></div></div></div>
+  <div class="zone" id="right" aria-label="Right stick"><div class="base"><div class="knob"></div></div></div>
+
+  <dialog id="settings">
+    <form method="dialog">
+      <h2>Stick mode</h2>
+      <div id="modes"></div>
+      <p class="hint">Mode 2: left = throttle/yaw, right = pitch/roll.</p>
+      <button type="submit">Done</button>
+    </form>
+  </dialog>
+
+  <div id="rotate">Turn your phone to landscape</div>
+  <!-- iOS 18+ Safari plays a haptic tick when a switch toggles; Safari has no Vibration API -->
+  <label id="haptic" aria-hidden="true"><input type="checkbox" switch tabindex="-1" /></label>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

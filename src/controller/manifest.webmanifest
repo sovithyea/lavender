@@ -1,0 +1,9 @@
+{
+  "name": "Lavender RC",
+  "short_name": "Lavender RC",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#111",
+  "theme_color": "#111"
+}

@@ -1,0 +1,45 @@
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden; background: #111; color: #eee;
+  font: 14px -apple-system, system-ui, sans-serif;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none; overscroll-behavior: none;
+}
+#bar {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 2;
+  display: flex; gap: 8px; align-items: center; padding: max(6px, env(safe-area-inset-top)) 8px 6px;
+}
+#bar button, dialog button {
+  background: #2a2a2e; color: #eee; border: 1px solid #444; border-radius: 8px;
+  padding: 8px 12px; font: inherit; min-height: 40px;
+}
+#status { font-weight: 600; }
+#status.ok { color: #6d6; }
+#status.bad { color: #f66; }
+#modeLabel { color: #aaa; }
+.zone { position: fixed; top: 0; bottom: 0; width: 50%; }
+#left { left: 0; border-right: 1px solid #222; }
+#right { right: 0; }
+.base {
+  position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px;
+  border: 2px solid #444; border-radius: 16px; left: 50%; top: 58%; opacity: .5;
+}
+.zone.active .base { opacity: 1; border-color: #8a7cff; }
+.knob {
+  position: absolute; width: 56px; height: 56px; left: 47px; top: 47px;
+  border-radius: 50%; background: #8a7cff; pointer-events: none;
+}
+dialog { background: #1c1c20; color: #eee; border: 1px solid #444; border-radius: 12px; }
+dialog h2 { margin: 0 0 8px; font-size: 16px; }
+#modes { display: flex; gap: 12px; margin-bottom: 8px; }
+#modes label { display: flex; gap: 4px; align-items: center; font-size: 16px; }
+.hint { color: #aaa; margin: 0 0 12px; }
+#rotate { display: none; }
+@media (orientation: portrait) {
+  #rotate {
+    display: flex; position: fixed; inset: 0; z-index: 10; background: #111;
+    align-items: center; justify-content: center; font-size: 20px;
+  }
+}
+#haptic { position: absolute; left: -9999px; opacity: 0; pointer-events: none; }
+#settingsBtn { font-size: 20px; padding: 4px 12px; }

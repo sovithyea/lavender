@@ -1,0 +1,38 @@
+{
+  "name": "lavender",
+  "scripts": {
+    "dev": "node --watch src/server/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sovithyea/lavendar.git"
+  },
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/sovithyea/lavendar/issues"
+  },
+  "homepage": "https://github.com/sovithyea/lavendar#readme",
+  "private": true,
+  "dependencies": {
+    "express": "^5.3.0",
+    "lil-gui": "^0.21.0",
+    "qrcode": "^1.5.4",
+    "three": "^0.186.1",
+    "vite": "^8.3.4",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/three": "^0.186.0",
+    "@types/ws": "^8.18.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
