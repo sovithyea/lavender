@@ -1,5 +1,6 @@
 import GUI from 'lil-gui';
 import * as THREE from 'three';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { PRESETS, SIM, type FlightParams } from '../shared/config.ts';
 import { createState, DEG, G, gustAt, step, windFrom } from '../shared/physics.ts';
 import { NEUTRAL, sanitizeSticks, type Sticks } from '../shared/sticks.ts';
@@ -85,6 +86,10 @@ let simTime = 0; // s of flying, drives the gusts
 const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
 renderer.setPixelRatio(devicePixelRatio);
 document.body.prepend(renderer.domElement);
+// Headsets (Quest browser over HTTPS): 'local' puts your eyes at the rig, so the cameras' eye positions carry over.
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local');
+void navigator.xr?.isSessionSupported('immersive-vr').then((ok) => ok && document.body.append(VRButton.createButton(renderer)));
 const scene = new THREE.Scene();
 const grid = buildWorld(scene);
 grid.visible = settings.grid;
@@ -101,6 +106,10 @@ const droneMesh = buildDrone();
 const shadow = buildShadow();
 scene.add(droneMesh, shadow);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 1000);
+// In VR the headset owns the camera's pose, so the view moves the rig it sits in instead.
+const rig = new THREE.Group();
+rig.add(camera);
+scene.add(rig);
 const cams = createCameras(camera, renderer.domElement);
 const trail = createTrail(scene);
 function resize() {
@@ -179,7 +188,7 @@ addEventListener('keydown', (e) => {
 });
 
 function connect() {
-  ws = new WebSocket(`ws://${location.host}/ws?role=sim`);
+  ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?role=sim`);
   ws.onmessage = (e) => {
     let msg: { type?: string; s?: unknown; cmd?: unknown; role?: unknown; connected?: unknown };
     try { msg = JSON.parse(e.data); } catch { return; }
@@ -253,7 +262,15 @@ function frame(now: number) {
   poseDrone(droneMesh, shadow, drone);
   const motors = !paused && (drone.pos.y > 0 || shown.throttle > 0.05);
   animateDrone(droneMesh, motors ? drone.thrust / G : 0, frameDt);
+  rig.position.set(0, 0, 0);
+  rig.rotation.set(0, 0, 0);
+  rig.updateMatrixWorld();
   const zoom = cams.update(droneMesh, settings.autoZoom);
+  if (renderer.xr.isPresenting) {
+    // Keep only the eye position and, for FPV and chase, the drone's heading: your head does the looking around.
+    rig.position.copy(camera.position);
+    if (cams.index() === 1 || cams.index() === 3) rig.rotation.y = droneMesh.rotation.y;
+  }
   training.frame(drone, now / 1000);
   tutorial.frame(drone, shown, now / 1000);
   audio.update({
@@ -264,6 +281,5 @@ function frame(now: number) {
   $('soundHint').hidden = !settings.sound || audio.running();
   hud(linked, p, w, shown, zoom);
   renderer.render(scene, camera);
-  requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+renderer.setAnimationLoop(frame); // unlike requestAnimationFrame, keeps running inside a VR session

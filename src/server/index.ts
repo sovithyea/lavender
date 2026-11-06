@@ -1,5 +1,7 @@
 import fs from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import http from 'node:http';
+import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import express from 'express';
@@ -20,8 +22,21 @@ function lanAddress(): string {
 // Looked up on each use: the Mac's address changes when it switches networks (e.g. to Personal Hotspot).
 const controllerUrl = () => `http://${lanAddress()}:${PORT}/controller/`;
 
+// VR headsets only allow WebXR over HTTPS, so the sim is also served on PORT + 1 with a self-signed certificate.
+async function tls() {
+  const dir = path.join(ROOT, 'data', 'cert'), key = path.join(dir, 'key.pem'), cert = path.join(dir, 'cert.pem');
+  try {
+    return { key: await fs.readFile(key), cert: await fs.readFile(cert) };
+  } catch {
+    await fs.mkdir(dir, { recursive: true });
+    execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '825', '-subj', '/CN=lavender', '-keyout', key, '-out', cert], { stdio: 'ignore' });
+    return { key: await fs.readFile(key), cert: await fs.readFile(cert) };
+  }
+}
+
 const app = express();
 const server = http.createServer(app);
+const secure = https.createServer(await tls(), app);
 
 app.get('/api/connect', async (_req, res) => {
   const url = controllerUrl();
@@ -81,7 +96,7 @@ const sendTo = (role: Role, data: string) => {
   for (const [ws, r] of peers) if (r === role && ws.readyState === WebSocket.OPEN) ws.send(data);
 };
 const wss = new WebSocketServer({ noServer: true, maxPayload: 64 * 1024 });
-server.on('upgrade', (req, socket, head) => {
+function upgrade(req: http.IncomingMessage, socket: import('node:stream').Duplex, head: Buffer) {
   const url = new URL(req.url ?? '/', 'http://localhost');
   if (url.pathname !== '/ws') return; // Vite's HMR socket handles its own upgrades
   wss.handleUpgrade(req, socket, head, (ws) => {
@@ -96,7 +111,10 @@ server.on('upgrade', (req, socket, head) => {
       sendTo(other, JSON.stringify({ type: 'peer', role, connected: false }));
     });
   });
-});
+}
+server.on('upgrade', upgrade);
+// No HMR over HTTPS (it's attached to the HTTP server), so drop anything but the relay rather than leave it hanging.
+secure.on('upgrade', (req, socket, head) => (req.url?.startsWith('/ws') ? upgrade(req, socket, head) : socket.destroy()));
 
 const vite = await createViteServer({
   configFile: false,
@@ -106,8 +124,10 @@ const vite = await createViteServer({
 });
 app.use(vite.middlewares);
 
+secure.listen(PORT + 1, '0.0.0.0');
 server.listen(PORT, '0.0.0.0', async () => {
   console.log(`\n  Simulator (open on this Mac):  http://localhost:${PORT}/sim/`);
+  console.log(`  VR headset (Quest browser):    https://${lanAddress()}:${PORT + 1}/sim/`);
   const url = controllerUrl();
   console.log(`  Controller (open on phone):    ${url}\n`);
   console.log(await QRCode.toString(url, { type: 'terminal', small: true }));

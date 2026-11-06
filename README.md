@@ -1,4 +1,4 @@
-# Lavender: RePL practical flight trainer
+c# Lavender: RePL practical flight trainer
 
 A local drone sim for practising the CASA RePL multi-rotor VLOS practical test. The sim runs in a browser on your Mac, and your iPhone is the remote control. Nothing runs in the cloud and no accounts are needed.
 
